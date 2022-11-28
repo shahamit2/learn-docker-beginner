@@ -1,0 +1,6 @@
+The push refers to repository [docker.io/shahamit2/quote]
+e20fcff8fbab: Pushed
+5f70bf18a086: Layer already exists
+16e53104fc83: Pushed
+e2eb06d8af82: Layer already exists
+v1: digest: sha256:e786a93fc6919996a68ae90992e5ab2275f1bfb98bf0646e82c4adfa78fe4ec7 size: 1148

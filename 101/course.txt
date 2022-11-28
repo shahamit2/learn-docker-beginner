@@ -1,0 +1,139 @@
+Index: -
+1. Course Objective
+2. Why Docker?
+3. About Docker
+4. About Image
+5. Layers in Image
+6. Build Image
+7. Push/Pull to/from hub.docker.com
+8. Don't repeat mechanism
+
+******************************************************
+1. Course Objective
+- Explain basics of docker and about images.
+- Also, it should help learner to explore things on their own.
+
+******************************************************
+2. Why Docker?
+- Dev works for three clients and each client is using different version of mongodb?
+  - Install 3 mongodb version.
+  - Think about Application version and other s/w versions.
+  - Difficulty in reproducing of issue reported by different client
+    - How quickly to setup same environment?
+- Communication gap due to textual instruction from Dev to Test/Ops.
+- VM creation comes with own resource(storage,memory and process) overhead.
+  - One for DB, One for App, etcetra, etcetra....
+- Monolith limitations
+  - All features of application in one server
+  - One database
+
+=> Answer is docker. It will be answered through next couple of sections.
+
+******************************************************
+3. About Docker
+- What is Docker?
+  - Docker is engine that runs on Linux VM.
+    - Client:
+        OS/Arch: darwin/amd64
+    - Server:
+        OS/Arch: linux/amd64
+  - It has client and server.
+- RUN: docker version
+- Docker comes with
+  - Images
+  - Containers
+  - Networking
+  - Volumes
+  - Resource Controlling through Process
+  - etcetra, etcetra..
+
+******************************************************
+4. About Image
+- Image
+  - Package of related folders and files.
+    - Read only template.
+    - filesystem based on an ordered union of multiple layers of files and directories.
+  - Entrypoint info.
+    - Execution command.
+- Where images live?
+  - Public and Private Repositories
+  - hub.docker.com
+  - AWS/Google/Azure -- all have their own repos.
+- RUN: docker images  // list
+- RUN: docker rmi postgres // remove
+- RUN: docker pull postgres // add
+
+******************************************************
+5. Layers in Image
+- Layers
+  - Each layer is collection of files and directories
+  - Docker download and verify sha256 for each layer.
+  - Docker essembles all layers and makes image.
+  - Layer1 : Base image of linux
+    - alpine: smaller one.
+  - LayerN
+    - Set of files installed on base image
+    - Commands for directory navigation in base image
+- Security
+  - Each layer has associated sha256 for security.
+    - docker can verify if image is tempered or not during download.
+    - RUN: docker images --digests
+    - RUN: docker image inspect postgres | jq -r '.[].RootFS.Layers[]'
+
+
+- Example of Image definition
+#########################
+FROM alpine:3.14           => Layer 1 => Base Image
+RUN mkdir -p '/quotes'     => Layer 2
+WORKDIR '/quotes'          => Layer 3
+COPY quote.txt .           => Layer 4
+CMD ["cat", "quote.txt"]   => Layer 5
+#########################
+
+******************************************************
+6. Build Image
+- Process of building image
+  - Specify commands in "Dockerfile"
+  - RUN: docker build .
+  - Each command executed on base image is layer.
+  - Docker takes snapshot of each layer.
+
+******************************************************
+7. Push/Pull to/from hub.docker.com
+- Create your login on hub.docker.com
+- Login to docker
+  - RUN: docker login
+- RUN: cd exp0
+- RUN: docker build -t shahamit2/helloworld .
+  - Image built with "docker build" is saved on local machine.
+- RUN: docker run shahamit2/helloworld
+- Push image to docker hub using
+  - RUN: docker push shahamit2/helloworld
+- Remove data from local machine
+  - RUN: docker rmi shahamit2/helloworld
+  - RUN: docker system prune
+  - RUN: docker system info
+- Pull image from docker hub using
+  - RUN: docker pull shahamit2/helloworld
+
+******************************************************
+8. Don't repeat mechanism.
+- Snapshot + Process of change.
+  - Scenario:
+    - Consider, you have image of 5 layers.
+    - Layer 4 is changed.
+    - docker image is rebuilt.
+    - it will start rebuilding from layer 4.
+- Example
+  - A)
+    - RUN: cd exp1
+    - RUN: docker build -t shahamit2/quote:v1 .
+    - RUN: docker push shahamit2/quote:v1
+  - B)
+    - RUN: cd ../exp2
+    - modify quote.txt and add one extra quote in it.
+    - RUN: docker build -t shahamit2/quote:v2 .
+    - RUN: docker push shahamit2/quote:v2
+- Observe the build and push command output of exp1 and exp2 directory.
+  - It will push those layers which do not exists on hub.docker.com.
+

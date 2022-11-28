@@ -1,0 +1,180 @@
+Index: -
+1. Course Objective
+2. About Container
+3. First App - v1 - Without Enviroment Variables
+4. First App - v1 - Play with container
+5. First App - v2 - With Enviroment Variables
+6. First App - v2 - Play with container
+7. Firat App - Not accessible Outside
+8. Aside - Logs
+9. First App - Connect - Inside
+10. First App - Connect - Outside
+11. Pros of Docker
+
+
+******************************************************
+1. Course Objective
+- Explain below concepts with the help of sample App
+  - containers
+  - enviroment variables
+  - debug
+    - go inside container
+  - connect app inside/outside
+
+******************************************************
+2. About Container
+- Container
+  - Instance of Image.
+  *** START: Most IMPORTANT line ***
+  - One "PROCESS" running on your OS and accessing packaged folders/files only.
+  *** END **************************
+  - Resource limits can be set for that process.
+    - ^ Feature of docker.
+- List running/all containers.
+  - RUN: docker ps
+  - RUN: docker ps -a
+- Check OS processes
+  - RUN: ps -ef | grep -i postgres
+- Create first container with postgres image.
+  - RUN: docker create --name mypostgres -e POSTGRES_PASSWORD=post -d postgres
+- Run container
+  - RUN: docker start -a <container id>
+- Check OS processes
+  - RUN: ps -ef | grep -i start
+
+******************************************************
+3. First App - v1 - Without Enviroment Variables
+- Review content of firstappv1 folder.
+- Run application from local machine.
+  - RUN: cd firstappv1
+  - RUN: npm install
+  - RUN: node index.js
+  - http://localhost:3000
+- Build image
+  - RUN: cd firstappv1
+  - RUN: docker build -t shahamit2/firstapp:v1 .
+
+******************************************************
+4. First App - v1 - Play with container
+A) Create container
+- RUN: docker create shahamit2/firstapp:v1
+- Note container ID
+  - 7d7ea86f5c296113d629764c2a80b48484354b2fb4f5f26464f6ae4eca9a2136
+- List containers
+  - RUN: docker ps
+  - RUN: docker ps -a
+B) Start container
+- RUN: docker start 7d7e
+- RUN: docker ps
+C) Stop cotainer
+- RUN: docker stop 7d7e
+  - uses SIGTERM => allows cleanup by process
+    - if container doesn’t stop in 10sec then it’s fallback to SIGKILL
+- RUN: docker ps -a
+D) Kill container
+- RUN: docker start 7d7e
+- RUN: docker kill 7d7e
+  - uses SIGKILL => kills immediately
+E) Always use Run
+- RUN: docker run shahamit2/firstapp:v1
+
+******************************************************
+5. First App - v2 - With Enviroment Variables
+- Review content of firstappv2 folder.
+- Run application from local machine.
+  - RUN: cd firstappv2
+  - RUN: npm install
+  - RUN: export PORT=5000
+  - RUN: node index.js
+  - http://localhost:5000
+- Build image
+  - RUN: cd firstappv2
+  - RUN: docker build -t shahamit2/firstapp:v2 .
+
+******************************************************
+6. First App - v2 - Play with container
+- RUN: docker run -e PORT=5000 shahamit2/firstapp:v2
+- RUN: docker run -e PORT=7000 shahamit2/firstapp:v2
+
+******************************************************
+7. Firat App - Not accessible Outside
+- Spinup container in background
+  - RUN: docker run -e PORT=5000 -d shahamit2/firstapp:v2
+  - RUN: docker ps
+- Access App
+  - RUN: curl -XGET http://localhost:500
+    - It's not working, why?
+    - See next sections.
+
+******************************************************
+8. Aside - Logs
+- Debuging
+  - RUN: docker ps
+    - Note container ID.
+  - RUN: docker logs acc0
+- Where logs are stored
+  - RUN: docker inspect --format='{{.LogPath}}' acc0
+    - Sample Output
+      - /var/lib/docker/containers/acc0ebeb47d037bfe841acd42283c88783af14d27e387d4c7dfbea8dcdef6018/acc0ebeb47d037bfe841acd42283c88783af14d27e387d4c7dfbea8dcdef6018-json.log
+    - Hardtime locating on MAC -- Could not locate.
+
+******************************************************
+9. First App - Connect - Inside
+- Example
+  - RUN: docker ps
+    - Note container ID
+  - Intro to docker exec
+    - RUN: docker exec -it acc0 pwd
+    - RUN: docker exec -it acc0 ls
+    - SYNTAX: docker exec -it <container-id> <command>
+      - i: interactive
+      - t: terminal
+- Run /bin/sh command with "exec -it" to go inside container
+  - RUN: docker exec -it df745cbc0e23 /bin/sh
+  - Execute below commands inside container
+    - RUN: apk add --no-cache curl
+    - RUN: curl -XGET http://localhost:5000
+    - RUN: exit
+
+******************************************************
+10. First App - Connect - Outside
+- Port mapping
+  - Application is running inside container.
+  - Inside container port 5000 is open for application.
+  - Map container port with local machine port.
+- Option "-p" for Port mapping.
+  - RUN: docker run -p 5001:5000 -e PORT=5000 -d shahamit2/firstapp:v2
+  - Browser: http://localhost:5001
+  - SYNTAX: docker run -p <machine port>:<container port> image-name
+- Spin up another container
+  - RUN: docker run -p 4002:3000 shahamit2/firstapp:v1
+  - Browser: http://localhost:4002
+- N number of containers can be created..
+  - How easy it is to run N containers of one app with just port mapping.
+
+******************************************************
+11. Pros of Docker
+- Spinup redis container
+  - RUN: docker run -d redis
+  - Note ID: b10b5384995b5b54857004cbc0af0e7c326459ca9120f086066cb8a8afa69331
+- Connect to redis terminal
+  - RUN: docker exec -it b10b redis-cli
+  - RUN: > set myvalue 5
+  - RUN: > get myvalue
+- Think
+  - How quickly database is up and running?
+  - How many redis version can be run?
+    - as many as required..
+  - For same/different version multiple containers can be spin up.
+  - Did you
+    - do any configuration?
+    - read any install guide?
+  - Agree, little bit reading required from image page when starting for prod.
+- Think OS/Feature/Database/Multiple version of app
+  - Your application can have multiple features.
+  - Different features required different OS.
+  - Different features required different Database.
+  - How easy to create image from different OS?
+  - How easy to run different OS, Feature, Database and Multi version of App on one machine?
+
+

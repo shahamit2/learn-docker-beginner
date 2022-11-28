@@ -1,0 +1,9 @@
+version: '1'
+services:
+  redis-server:
+    image: 'redis'
+  countappv2:
+    build: .
+    image: shahamit2/countapp:v2
+    ports:
+      - "4082:8081"

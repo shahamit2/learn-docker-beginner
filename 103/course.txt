@@ -1,0 +1,271 @@
+Index: -
+1. Course Objective
+2. Network and Communication - 1
+3. Aside - Stop/Start
+4. Network and Communication - 2
+5. Count App - v1 - All in one place.
+6. Count App - v2 - docker-compose
+7. Excercise
+8. Persistent Storage
+9. Docker CMD
+10. Docker ENTRYPOINT
+11. Backup and Restore images
+12. Conclusion
+*) Misc
+
+
+******************************************************
+1. Course Objective
+- Networking in Docker
+- How containers communication
+- Utility docker-compose
+- Persistent storage
+
+******************************************************
+2. Network and Communication - 1
+- Docker creates its isolated network
+  - RUN: docker network ls
+- Docker containers can communicate just with "CONTAINER-NAME"
+  - RUN: docker run --name b1 -d alpine sleep 180
+  - RUN: docker run --name b2 -d alpine sleep 180
+- Create Network
+  - RUN: docker network create aplinenet
+- Attach container to network
+  - RUN: docker network connect alpinenet b1
+  - RUN: docker network connect alpinenet b2
+- Ping container one from container two
+  - RUN: docker exec -it b2 ping b1
+
+******************************************************
+3. Aside - Stop/Start
+- Use container name instead of ID
+  - RUN: docker stop b1
+  - RUN: docker stop b2
+  - RUN: docker start b2
+
+******************************************************
+4. Network and Communication - 2
+- Example of MongoDB for container communication
+- RUN : docker network create mongonet
+- Spin up mongodb
+  - Here option "--network" is used
+  - RUN: docker run -d \
+             -p 37017:27017 \
+             -e MONGO_INITDB_ROOT_USERNAME=admin \
+             -e MONGO_INITDB_ROOT_PASSWORD=mongo \
+             --name mongodb1 \
+             --network mongonet \
+             mongo
+- Spinup mongo-express to work with mongodb in browser
+  - RUN: docker run -d \
+         -p 9091:8081 \
+         -e ME_CONFIG_MONGODB_ADMINUSERNAME=admin \
+         -e ME_CONFIG_MONGODB_ADMINPASSWORD=mongo \
+         -e ME_CONFIG_MONGODB_SERVER=mongodb1 \
+         --name mongoexp1 \
+         --network mongonet \
+         mongo-express
+- Access MongoDB in browser
+  - BROWSER: http://localhost:9091
+
+******************************************************
+5. Count App - v1 - All in one place.
+- All in one = DB + Application code.
+- Review content of countappv1 folder.
+- RUN: docker run -p 6379 --name redis-server -d redis
+- Buld image
+  - Observe DB port in "index.js"
+  - RUN: cd countappv1
+  - RUN: docker build -t shahamit2/countapp:v1 .
+- RUN: docker run -p 4081:8081 shahamit2/countapp:v1
+- ** Attempt Failed **
+- RUN: docker stop redis-server
+- RUN: docker rm redis-server
+
+- ** Attempt with Network **
+  - RUN: docker network create appnet
+  - RUN: docker run --network appnet --name redis-server -d redis
+  - RUN: docker run -p 4081:8081 --network appnet --name countappv1 shahamit2/countapp:v1
+  - RUN: curl -XGET http://localhost:4081/
+  - BROWSER: http://localhost:4081/
+
+- Stop/Remove containers
+  - RUN: docker stop redis-server countappv1
+  - RUN: docker rm redis-server countappv1
+
+- ** Attempt with link command **
+  - RUN: docker run -p 6379 --name redis-server -d redis
+  - RUN: docker run --link redis-server:redis-server -p 4081:8081 --name=countapp -d shahamit2/countapp:v1
+  - RUN: curl -XGET http://localhost:4081/
+  - BROWSER: http://localhost:4081/
+  - RUN: docker inspect <container id of app>
+    - check section "Networks"
+
+- Handing over network stuff to docker-compose
+
+******************************************************
+6. Count App - v2 - docker-compose
+- New addition is just docker-compose.yml
+- Don't need to remember long command line options.
+- Review docker-compose.yml
+- Before
+  - RUN: docker network ls
+- RUN: docker-compose up --build -d
+- RUN: curl -XGET http://localhost:4081/
+- BROWSER: http://localhost:4082/
+- After
+  - RUN: docker network ls
+- Network is taken care and process is much simpler.
+
+- Stop/Remove containers
+  - RUN: docker-compose stop
+  - RUN: docker-compose down
+  - RUN: docker network rm compose_default
+
+
+******************************************************
+7. Exercise
+- Build Mongo and Mongo-Express with docker-compose
+- Review mongo folder only after trying for 30min
+
+- Once mongo.yaml is built up then run below commands.
+- RUN: docker-compose -f mongo.yaml up
+- BROWSER: http://localhost:8080
+
+- Stop/Remove containers
+  - RUN: docker-compose -f mongo.yaml stop
+  - RUN: docker-compose -f mongo.yaml down
+
+******************************************************
+8. Persistent Storage
+- To store data permanently even when container is gone
+- Volume mapping
+  - Storage maps to Container directory
+- Create Storage directory
+  - datadir=/Users/amitshah/data/docker/mysql
+  - RUN: mkdir -p ${datadir}
+- Spin container with volume mapping.
+  - RUN: export datadir=/Users/amitshah/data/docker/mysql
+  - RUN: docker run \
+            --name=mysqldb \
+            -p 3308:3307 \
+            -v ${datadir}:/var/lib/mysql \
+            -e MYSQL_ROOT_PASSWORD=mysql \
+            mysql
+  - RUN: mysql -uroot -pmysql -P3308
+  - RUN: USE test;
+  - Execute SQLs at the end of this section.
+  - RUN: docker stop mysqldb
+  - RUN: docker rm mysqldb
+*** Important ***
+  - Spinup container with new container name and same VOLUME
+*****************
+  - RUN: export datadir=/Users/amitshah/data/docker/mysql
+  - RUN: docker run \
+            --name=newmysqldb \
+            -p 3308:3307 \
+            -v ${datadir}:/var/lib/mysql \
+            -e MYSQL_ROOT_PASSWORD=mysql \
+            mysql
+  - RUN: mysql -uroot -pmysql -P3308
+  - RUN: USE test;
+  - RUN: SELECT * FROM student;
+- Syntax
+  - docker run -v <docker host volume>:<docker container volume> <docker image>
+
+- SQLs
+---
+DROP TABLE IF EXISTS student;
+CREATE TABLE student (
+    rno INT,
+    fname VARCHAR(20),
+    lname VARCHAR(20)
+) ENGINE=INNODB;
+INSERT INTO student(rno, fname, lname)
+VALUES(1, "Tsong", "Khapa");
+COMMIT;
+SELECT * FROM student;
+----
+
+******************************************************
+9. Docker CMD
+- Override allowed.
+- Build image with CMD
+  - RUN: cd execute1
+  - RUN: docker build . -t shahamit2/customalpine:v1
+- Spinup container - Without override
+  - RUN: docker run --name alphav1 -d shahamit2/customalpine:v1
+- Spinup container - With override
+  - RUN: docker run --name betav1 -d shahamit2/customalpine:v1 sleep 180
+- Inspect "CMD" section of container
+  - RUN: docker inspect alphav1
+  - RUN: docker inspect betav1
+
+******************************************************
+10. Docker ENTRYPOINT
+- Override not allowed.
+- Build image with ENTRYPOINT
+  - RUN: cd execute2
+  - RUN: docker build . -t shahamit2/customalpine:v2
+- Spinup container - Without override
+  - RUN: docker run --name alphav2 -d shahamit2/customalpine:v2
+- Spinup container - With override
+  - RUN: docker run --name betav2 -d shahamit2/customalpine:v2 sleep 180
+- Inspect "Command"
+  - RUN: docker ps
+
+******************************************************
+11. Backup and Restore images
+- Scenario
+  - Container is running from "Image1".
+  - On the fly some changes done to container.
+  - "Image2" is required to build from "Image1".
+  - "Image2" is required to be shared with other teammates.
+- Solution
+  - Snapshot and Restore of image.
+- Build image
+  - RUN: cd execute1
+  - RUN: docker build . -t shahamit2/customalpine:v1
+- RUN: docker run --name alphav1 -d shahamit2/customalpine:v1
+- RUN: docker exec -it alphav1 /bin/sh
+- RUN: echo "Be kind" > kind.out
+- RUN: exit
+- RUN: docker commit -p alphav1 bkpalpha
+- RUN: docker images
+- Save image
+  - RUN: docker save -o /Users/amitshah/data/docker/bkpalpha.tar bkpalpha
+  - RUN: ls -lthr /Users/amitshah/data/docker/bkpalpha.tar
+- Remove container and image
+- Remove backup image as well
+  - RUN: docker images
+  - RUN: docker rmi bkpalpha
+- Load image
+  - RUN: docker load < /Users/amitshah/data/docker/bkpalpha.tar
+  - RUN: docker images
+
+******************************************************
+12. Conclusion
+- How it helps?
+  - Less resource usage.
+    - Memory, Process and Storage
+      - No VM => Saving of Memory, Processes and Storage.
+  - Avoid textual communication between groups
+    - Give image with all files and config.
+    - Human errors avoided.
+  - Reproducing same env easily.
+    - Spin container and env ready.
+      - Note: Data is something one need to restore.
+  - Microservices.
+    - It is container based architecture.
+
+
+******************************************************
+*) Misc
+- RUN: docker system info
+- Actual disk usage by images.
+  - RUN: docker system df
+  - RUN: docker system df -v
+- RUN: docker inspect <object id>
+- RUN: docker history <Name of Image>
+- RUN: docker run ubuntu cat /etc/*release*
+

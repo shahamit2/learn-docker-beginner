@@ -1,0 +1,22 @@
+[+] Building 4.2s (9/9) FINISHED                                                                               
+ => [internal] load build definition from Dockerfile                                                      0.0s
+ => => transferring dockerfile: 141B                                                                      0.0s
+ => [internal] load .dockerignore                                                                         0.0s
+ => => transferring context: 2B                                                                           0.0s
+ => [internal] load metadata for docker.io/library/alpine:3.14                                            2.4s
+ => [1/4] FROM docker.io/library/alpine:3.14@sha256:e1c082e3d3c45cccac829840a25941e679c25d438cc8412c2fa2  1.3s
+ => => resolve docker.io/library/alpine:3.14@sha256:e1c082e3d3c45cccac829840a25941e679c25d438cc8412c2fa2  0.0s
+ => => sha256:69704ef328d05a9f806b6b8502915e6a0a4faa4d72018dc42343f511490daf8a 528B / 528B                0.0s
+ => => sha256:14119a10abf4669e8cdbdff324a9f9605d99697215a0d21c360fe8dfa8471bab 1.47kB / 1.47kB            0.0s
+ => => sha256:a0d0a0d46f8b52473982a3c466318f479767577551a53ffc9074c9fa7035982e 2.81MB / 2.81MB            1.1s
+ => => sha256:e1c082e3d3c45cccac829840a25941e679c25d438cc8412c2fa221cf1a824e6a 1.64kB / 1.64kB            0.0s
+ => => extracting sha256:a0d0a0d46f8b52473982a3c466318f479767577551a53ffc9074c9fa7035982e                 0.2s
+ => [internal] load build context                                                                         0.0s
+ => => transferring context: 157B                                                                         0.0s
+ => [2/4] RUN mkdir -p '/quotes'                                                                          0.3s
+ => [3/4] WORKDIR /quotes                                                                                 0.0s
+ => [4/4] COPY quote.txt .                                                                                0.0s
+ => exporting to image                                                                                    0.0s
+ => => exporting layers                                                                                   0.0s
+ => => writing image sha256:da306a00aa02c7beb3c448d533b3baa29d0b308945b27cd1d0e6ef508ac094a3              0.0s
+ => => naming to docker.io/shahamit2/quote:v1                                                             0.0s

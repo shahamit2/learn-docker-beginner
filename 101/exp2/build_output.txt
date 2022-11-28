@@ -1,0 +1,16 @@
+[+] Building 1.4s (9/9) FINISHED
+ => [internal] load build definition from Dockerfile                                                      0.0s
+ => => transferring dockerfile: 180B                                                                      0.0s
+ => [internal] load .dockerignore                                                                         0.0s
+ => => transferring context: 2B                                                                           0.0s
+ => [internal] load metadata for docker.io/library/alpine:3.14                                            1.2s
+ => [1/4] FROM docker.io/library/alpine:3.14@sha256:e1c082e3d3c45cccac829840a25941e679c25d438cc8412c2fa2  0.0s
+ => [internal] load build context                                                                         0.0s
+ => => transferring context: 192B                                                                         0.0s
+ => CACHED [2/4] RUN mkdir -p '/quotes'                                                                   0.0s
+ => CACHED [3/4] WORKDIR /quotes                                                                          0.0s
+ => [4/4] COPY quote.txt .                                                                                0.0s
+ => exporting to image                                                                                    0.0s
+ => => exporting layers                                                                                   0.0s
+ => => writing image sha256:acf477bda2a857f38a5582299578ddd1c0ee77a5e98de18f7a94029f36329bf1              0.0s
+ => => naming to docker.io/shahamit2/quote:v2                                                             0.0s
